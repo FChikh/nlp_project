@@ -1,0 +1,27 @@
+# PROMPT
+input_text = (
+    f"Below is an instruction that describes a task, "
+    "paired with an input that provides further context. "
+    "Write a response that appropriately completes the request.\n"
+    "### Instruction: "
+    f"{row['user_utterance']}\n"
+
+    "### Input:"
+    f"Domain: {domain}\n"
+    f"Intents: {intents_str}\n"
+    f"Slots: {slots_str}\n"
+    "\n"
+    "### Output:")
+
+
+
+# Construct input text for T5, including history
+input_text = (
+    f"History: {history_str}\n"
+    f"User: {user_query}\n"
+    f"Domain: {domain}\n"
+    f"Intents: {intents_str}\n"
+    f"Slots: {slots_str}\n"
+    f"Consider the followind data while preparing your answer: {db_str}\n"
+    f"System:"
+)
