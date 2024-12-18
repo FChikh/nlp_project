@@ -3,13 +3,16 @@ import json
 import os
 import pandas as pd
 
-# Paths (Adjust these if necessary)
 BASE_PATH = "multiwoz/data/MultiWOZ_2.2"
 TRAIN_PATH = os.path.join(BASE_PATH, "train")
 TEST_PATH = os.path.join(BASE_PATH, "test")
 
-
 def extract_dialogues(data_path):
+    """
+    Extract dialogues from the given data path.
+    
+    Parameters:
+    - data_path (str): Path to the data directory."""
     dialogues = []
     for file_name in os.listdir(data_path):
         if file_name.endswith('.json'):
@@ -20,6 +23,11 @@ def extract_dialogues(data_path):
 
 
 def preprocess_dialogues(dialogues):
+    """
+    Preprocess dialogues into a DataFrame.
+    
+    Parameters:
+    - dialogues (List[dict]): List of dialogue data."""
     records = []
     for d in dialogues:
         turns = d.get("turns", [])

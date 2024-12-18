@@ -1,4 +1,4 @@
-# app.py
+"""A simple chatbot interface using Streamlit to interact with the trained models."""
 
 import streamlit as st
 from domain_classifier import DomainClassifier
@@ -9,8 +9,6 @@ from schema_parser import SchemaParser
 from state_manager import ConversationState
 import os
 
-# Initialize components only once
-
 
 @st.cache_resource
 def initialize_components():
@@ -20,13 +18,10 @@ def initialize_components():
     retrieval_dir = "models/retrieval"
     domain_classifier_path = "./domain_classifier"
 
-    # Initialize SchemaParser
     schema_parser = SchemaParser(schema_path)
 
-    # Initialize DomainClassifier
     domain_classifier = DomainClassifier(model_path=domain_classifier_path)
 
-    # Initialize IntentsSlotsExtractor
     intents_slots_extractor = IntentsSlotsExtractor(
         schema_parser,
         embedding_model_name='all-MiniLM-L6-v2',
@@ -38,11 +33,8 @@ def initialize_components():
 
     return domain_classifier, intents_slots_extractor, retrieval_dir
 
-
 # Initialize components
 domain_classifier, intents_slots_extractor, retrieval_dir = initialize_components()
-
-# Initialize ResponseGenerator (loaded on first use)
 
 
 @st.cache_resource
@@ -57,18 +49,15 @@ def initialize_response_generator():
 
 response_generator = initialize_response_generator()
 
-# Initialize ConversationState in session state
 if 'conversation_state' not in st.session_state:
     st.session_state.conversation_state = ConversationState()
 
-# Initialize conversation history in session state
 if 'conversation_history' not in st.session_state:
     st.session_state.conversation_history = []
 
 # Streamlit UI
 st.title("🏠 Chatbot Interface")
 
-# Optional: Instructions
 st.markdown("""
 **Instructions:**
 - Type your message in the input box below and press "Send" to interact with the chatbot.
@@ -76,8 +65,6 @@ st.markdown("""
 """)
 
 # Display conversation history
-
-
 def display_conversation():
     for exchange in st.session_state.conversation_history:
         user_msg = exchange['user']
@@ -97,10 +84,8 @@ if st.button("Send") and user_input.strip() != "":
             "Response Generator model not found. Please train the generator before interacting.")
     else:
         with st.spinner("Processing..."):
-            # Update state with user input
             st.session_state.conversation_state.update_user_input(user_input)
 
-            # Step 1: Domain Classification
             predicted_domains = domain_classifier.predict(user_input)
             if not predicted_domains:
                 response = "I'm sorry, I couldn't determine the domain of your request."
@@ -114,7 +99,7 @@ if st.button("Send") and user_input.strip() != "":
                 st.session_state.conversation_state.update_user_domain(domain)
 
                 # Step 2: Intent and Slot Extraction
-                services = [domain]  # Assuming single domain for simplicity
+                services = [domain] # Assuming single domain for simplicity
                 extracted = intents_slots_extractor.extract_intents_slots(
                     user_input, services)
                 st.write(f"[DEBUG] Extracted Intents and Slots: {extracted}")
@@ -173,7 +158,7 @@ if st.button("Send") and user_input.strip() != "":
                 # Refresh the page to display the new message
                 st.rerun()
 
-# Optional: Clear conversation button
+# Clear conversation button
 if st.button("Clear Conversation"):
     st.session_state.conversation_history = []
     st.session_state.conversation_state = ConversationState()

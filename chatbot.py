@@ -7,6 +7,15 @@ from state_manager import ConversationState
 
 
 def main():
+    """
+    Main function to run the chatbot in the CLI.
+    
+    The chatbot performs the following steps:
+    1. Domain Classification
+    2. Intent and Slot Extraction
+    3. Database Retrieval
+    4. Generate Response
+    """
     schema_path = "multiwoz/data/MultiWOZ_2.2/schema.json"
     embedding_dir = "models/embeddings"
     retrieval_dir = "models/retrieval"
@@ -31,7 +40,6 @@ def main():
             print("Chatbot: Goodbye!")
             break
 
-        # Update state with user input
         state.update_user_input(user_query)
 
         # Step 1: Domain Classification

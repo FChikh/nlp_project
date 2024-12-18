@@ -2,6 +2,7 @@
 
 import pandas as pd
 from transformers import T5Tokenizer, T5ForConditionalGeneration, Trainer, TrainingArguments
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
 from datasets import Dataset
 import torch
 from typing import Dict, List, Any
@@ -16,8 +17,6 @@ def train_generator():
     Parameters:
     - history_length (int): Number of previous exchanges to include in the input.
     """
-    # Import the necessary function
-    from retrieval import retrieve_db_entries  # Ensure correct path
 
     # Load training and validation data
     train_df = pd.read_csv("train_preprocessed.csv")
@@ -64,19 +63,22 @@ def train_generator():
     val_dataset = Dataset.from_pandas(pd.DataFrame(list(val_data)))
 
     # Initialize the tokenizer
-    tokenizer = T5Tokenizer.from_pretrained("t5-small")
+    tokenizer = GPT2Tokenizer.from_pretrained("distilgpt2")
+    tokenizer.add_special_tokens({
+        "pad_token": "<PAD>"
+    })
 
     def preprocess(examples):
         model_inputs = tokenizer(
             examples["input_text"],
-            max_length=1024,
+            max_length=512,
             truncation=True,
             padding="max_length"
         )
         with tokenizer.as_target_tokenizer():
             labels = tokenizer(
                 examples["target_text"],
-                max_length=150,
+                max_length=512,
                 truncation=True,
                 padding="max_length"
             )
@@ -98,13 +100,13 @@ def train_generator():
     train_dataset.set_format("torch")
     val_dataset.set_format("torch")
 
-    model = T5ForConditionalGeneration.from_pretrained("./t5_finetuned")
+    model = GPT2LMHeadModel.from_pretrained("distilgpt2")
 
     training_args = TrainingArguments(
-        output_dir="./t5_finetuned",
+        output_dir="./distilgpt2_finetuned",
         per_device_train_batch_size=4,
         per_device_eval_batch_size=4,
-        num_train_epochs=1,
+        num_train_epochs=2,
         logging_steps=100,
         save_steps=500,
         evaluation_strategy="epoch",
@@ -126,9 +128,9 @@ def train_generator():
     trainer.train()
 
     # Save the fine-tuned model and tokenizer
-    model.save_pretrained("./t5_finetuned")
-    tokenizer.save_pretrained("./t5_finetuned")
-    print("Generator training complete and model saved to './t5_finetuned/'.")
+    model.save_pretrained("./distilgpt2_finetuned")
+    tokenizer.save_pretrained("./distilgpt2_finetuned")
+    print("Generator training complete and model saved to './distilgpt2_finetuned/'.")
 
 
 if __name__ == "__main__":

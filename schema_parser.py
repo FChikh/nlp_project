@@ -1,5 +1,3 @@
-# src/schema_parser.py
-
 import json
 import os
 
@@ -70,7 +68,16 @@ class SchemaParser:
         return []
 
     def is_slot_categorical(self, service_name, slot_name):
-
+        """
+        Check if a slot is categorical or not.
+        
+        Parameters:
+        - service_name (str): Name of the service/domain.
+        - slot_name (str): Name of the slot.
+        
+        Returns:
+        - bool: True if the slot is categorical, False otherwise.
+        """
         slots = self.get_slots(service_name)
         for slot in slots:
             if slot['name'] == slot_name:

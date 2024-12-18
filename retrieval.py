@@ -1,4 +1,3 @@
-# src/retrieval.py
 import json
 import os
 import faiss
@@ -6,16 +5,19 @@ import pickle
 from sentence_transformers import SentenceTransformer
 from typing import List, Tuple
 
-# Paths (Adjust these if necessary)
-BASE_PATH = "multiwoz/db/"
-DB_DIR = BASE_PATH  # Assuming db files are in the base directory
+BASE_PATH = "multiwoz/db"
+DB_DIR = BASE_PATH
 
 # Initialize embedding model
-embedding_model = SentenceTransformer(
-    'all-MiniLM-L6-v2')  # Lightweight and effective
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2') 
 
 
 def load_db(domain: str) -> List[dict]:
+    """
+    Load the database for a given domain.
+    
+    Parameters:
+    - domain (str): The domain of the database."""
     db_file = os.path.join(DB_DIR, f"{domain}_db.json")
     with open(db_file, 'r', encoding='utf-8') as f:
         db = json.load(f)
@@ -23,6 +25,13 @@ def load_db(domain: str) -> List[dict]:
 
 
 def convert_db_to_text(db: List[dict], domain: str) -> List[str]:
+    """
+    Convert the database entries to text format. This is required to create an embedding index.
+    
+    Parameters:
+    - db (List[dict]): The database entries.
+    - domain (str): The domain of the database.
+    """
     db_texts = []
     for entity in db:
         entity_text = f"Domain: {domain}, " + ", ".join(
@@ -32,6 +41,13 @@ def convert_db_to_text(db: List[dict], domain: str) -> List[str]:
 
 
 def prepare_db_indices(domains: List[str], save_dir: str = "models/retrieval"):
+    """
+    Prepare FAISS indices for the database entries of the given domains.
+    
+    Parameters:
+    - domains (List[str]): List of domains.
+    - save_dir (str): Directory to save the indices.
+    """
     os.makedirs(save_dir, exist_ok=True)
     for domain in domains:
         print(f"Processing domain: {domain}")
@@ -51,6 +67,13 @@ def prepare_db_indices(domains: List[str], save_dir: str = "models/retrieval"):
 
 
 def load_retrieval_resources(domain: str, save_dir: str = "models/retrieval") -> Tuple[faiss.Index, List[str]]:
+    """
+    Load the FAISS index and database texts for a given domain.
+    
+    Parameters:
+    - domain (str): The domain of interest.
+    - save_dir (str): Directory where the indices are saved.
+    """
     index_path = os.path.join(save_dir, f"{domain}_faiss.index")
     texts_path = os.path.join(save_dir, f"{domain}_db_texts.pkl")
     index = faiss.read_index(index_path)
@@ -58,7 +81,7 @@ def load_retrieval_resources(domain: str, save_dir: str = "models/retrieval") ->
         db_texts = pickle.load(f)
     return index, db_texts
 
-def parse_text_to_json(text: str) -> dict:
+def _parse_text_to_json(text: str) -> dict:
     result = {}
     parts = text.split(". ")
     for part in parts:
@@ -72,11 +95,20 @@ def parse_text_to_json(text: str) -> dict:
     
 
 def retrieve_db_entries(query: str, domain: str, top_k: int = 3, save_dir: str = "models/retrieval") -> List[str]:
+    """
+    Retrieve the top-k database entries for a given query and domain based on semantic similarity.
+    
+    Parameters:
+    - query (str): The user query.
+    - domain (str): The domain of interest.
+    - top_k (int): Number of top entries to retrieve.
+    - save_dir (str): Directory where the indices are saved.
+    """
     index, db_texts = load_retrieval_resources(domain, save_dir)
     embedding = embedding_model.encode([query], convert_to_numpy=True)
     faiss.normalize_L2(embedding)
-    distances, indices = index.search(embedding, top_k)
-    retrieved = [parse_text_to_json(db_texts[idx]) for idx in indices[0]]
+    similarities, indices = index.search(embedding, top_k)
+    retrieved = [_parse_text_to_json(db_texts[idx]) for idx in indices[0]]
     return retrieved
 
 
@@ -86,7 +118,7 @@ if __name__ == "__main__":
     domains = ["hotel", "train", "attraction",
                "restaurant", "hospital", "taxi", "bus", "police"]
     # Prepare indices (Run only once)
-    # prepare_db_indices(domains)
+    prepare_db_indices(domains)
 
     # # Example retrieval
     retrieved = retrieve_db_entries("I need an expensive chinese restaurant in the center, there will be a table for 4 people", "restaurant", top_k=5)
